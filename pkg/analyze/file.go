@@ -3,6 +3,7 @@ package analyze
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/dundee/gdu/v5/pkg/fs"
@@ -27,6 +28,10 @@ func (f *File) GetName() string {
 // IsDir returns false for file
 func (f *File) IsDir() bool {
 	return false
+}
+
+func (f *File) IsArchive() bool {
+	return strings.HasSuffix(f.GetName(), ".zip")
 }
 
 // GetParent returns parent dir

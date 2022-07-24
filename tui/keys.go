@@ -104,7 +104,7 @@ func (ui *UI) keyPressed(key *tcell.EventKey) *tcell.EventKey {
 	case 'e':
 		ui.handleDelete(true)
 	case 'v':
-		ui.showFile()
+		ui.showContent()
 	case 'i':
 		ui.showInfo()
 	case 'a':

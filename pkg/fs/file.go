@@ -11,6 +11,7 @@ type Item interface {
 	GetName() string
 	GetFlag() rune
 	IsDir() bool
+	IsArchive() bool
 	GetSize() int64
 	GetType() string
 	GetUsage() int64

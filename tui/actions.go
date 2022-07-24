@@ -1,7 +1,9 @@
 package tui
 
 import (
+	"archive/zip"
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -200,6 +202,21 @@ func (ui *UI) deleteSelected(shouldEmpty bool) {
 	}()
 }
 
+func (ui *UI) showContent() *tview.TextView {
+	if ui.currentDir == nil {
+		return nil
+	}
+
+	row, column := ui.table.GetSelection()
+	selectedFile := ui.table.GetCell(row, column).GetReference().(fs.Item)
+
+	if selectedFile.IsArchive() {
+		return ui.showArchive()
+	}
+
+	return ui.showFile()
+}
+
 func (ui *UI) showFile() *tview.TextView {
 	if ui.currentDir == nil {
 		return nil
@@ -287,6 +304,69 @@ func (ui *UI) showFile() *tview.TextView {
 	ui.pages.AddPage("file", grid, true, true)
 
 	return file
+}
+
+// TODO: handle archives
+func (ui *UI) showArchive() *tview.TextView {
+	if ui.currentDir == nil {
+		return nil
+	}
+
+	row, column := ui.table.GetSelection()
+	selectedFile := ui.table.GetCell(row, column).GetReference().(fs.Item)
+
+	// TODO: support more archives (tar!!)
+	if !selectedFile.IsArchive() {
+		ui.showErr("selected file is not an archive", errors.New(".zip extension missing"))
+		return nil
+	}
+
+	zipReader, zipErr := zip.OpenReader(selectedFile.GetPath())
+
+	if zipErr != nil {
+		ui.showErr("Failed to read contents of archive", zipErr)
+		return nil
+	}
+
+	archive := tview.NewTextView()
+
+	ui.currentDirLabel.SetText("[::b] --- " +
+		strings.TrimPrefix(selectedFile.GetPath(), build.RootPathPrefix) +
+		" ---").SetDynamicColors(true)
+
+	for _, entry := range zipReader.File {
+		archive.Write([]byte(fmt.Sprintf("%s %d", entry.Name, entry.UncompressedSize64)))
+		archive.Write([]byte("\n"))
+	}
+
+	archive.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'q' || event.Key() == tcell.KeyESC {
+			closeErr := zipReader.Close()
+			if closeErr != nil {
+				ui.showErr("Error closing file", closeErr)
+				return event
+			}
+			ui.currentDirLabel.SetText("[::b] --- " +
+				strings.TrimPrefix(ui.currentDirPath, build.RootPathPrefix) +
+				" ---").SetDynamicColors(true)
+			ui.pages.RemovePage("archive")
+			ui.app.SetFocus(ui.table)
+			return event
+		}
+
+		return event
+	})
+
+	grid := tview.NewGrid().SetRows(1, 1, 0, 1).SetColumns(0)
+	grid.AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
+		AddItem(ui.currentDirLabel, 1, 0, 1, 1, 0, 0, false).
+		AddItem(archive, 2, 0, 1, 1, 0, 0, true).
+		AddItem(ui.footerLabel, 3, 0, 1, 1, 0, 0, false)
+
+	ui.pages.HidePage("background")
+	ui.pages.AddPage("archive", grid, true, true)
+
+	return archive
 }
 
 func (ui *UI) showInfo() {
