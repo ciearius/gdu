@@ -22,7 +22,7 @@ func TestSortByUsage(t *testing.T) {
 		},
 	}
 
-	sort.Sort(files)
+	sort.Sort(sort.Reverse(files))
 
 	assert.Equal(t, int64(3), files[0].GetUsage())
 	assert.Equal(t, int64(2), files[1].GetUsage())
@@ -45,7 +45,7 @@ func TestStableSortByUsage(t *testing.T) {
 		},
 	}
 
-	sort.Sort(files)
+	sort.Sort(sort.Reverse(files))
 
 	assert.Equal(t, "ccc", files[0].GetName())
 	assert.Equal(t, "bbb", files[1].GetName())
@@ -65,7 +65,7 @@ func TestSortByUsageAsc(t *testing.T) {
 		},
 	}
 
-	sort.Sort(sort.Reverse(files))
+	sort.Sort(files)
 
 	assert.Equal(t, int64(1), files[0].GetSize())
 	assert.Equal(t, int64(2), files[1].GetSize())
@@ -85,7 +85,7 @@ func TestSortBySize(t *testing.T) {
 		},
 	}
 
-	sort.Sort(fs.ByApparentSize(files))
+	sort.Sort(sort.Reverse(fs.ByApparentSize(files)))
 
 	assert.Equal(t, int64(3), files[0].GetSize())
 	assert.Equal(t, int64(2), files[1].GetSize())
@@ -105,7 +105,7 @@ func TestSortBySizeAsc(t *testing.T) {
 		},
 	}
 
-	sort.Sort(sort.Reverse(fs.ByApparentSize(files)))
+	sort.Sort(fs.ByApparentSize(files))
 
 	assert.Equal(t, int64(1), files[0].GetSize())
 	assert.Equal(t, int64(2), files[1].GetSize())
@@ -125,7 +125,7 @@ func TestSortByItemCount(t *testing.T) {
 		},
 	}
 
-	sort.Sort(fs.ByItemCount(files))
+	sort.Sort(sort.Reverse(fs.ByItemCount(files)))
 
 	assert.Equal(t, 3, files[0].GetItemCount())
 	assert.Equal(t, 2, files[1].GetItemCount())
@@ -145,11 +145,31 @@ func TestSortByName(t *testing.T) {
 		},
 	}
 
-	sort.Sort(fs.ByName(files))
+	sort.Sort(sort.Reverse(fs.ByName(files)))
 
 	assert.Equal(t, "cc", files[0].GetName())
 	assert.Equal(t, "bb", files[1].GetName())
 	assert.Equal(t, "aa", files[2].GetName())
+}
+
+func TestNaturalSortByNameAsc(t *testing.T) {
+	files := fs.Files{
+		&File{
+			Name: "aa3",
+		},
+		&File{
+			Name: "aa20",
+		},
+		&File{
+			Name: "aa100",
+		},
+	}
+
+	sort.Sort(fs.ByName(files))
+
+	assert.Equal(t, "aa3", files[0].GetName())
+	assert.Equal(t, "aa20", files[1].GetName())
+	assert.Equal(t, "aa100", files[2].GetName())
 }
 
 func TestSortByMtime(t *testing.T) {
@@ -165,7 +185,7 @@ func TestSortByMtime(t *testing.T) {
 		},
 	}
 
-	sort.Sort(fs.ByMtime(files))
+	sort.Sort(sort.Reverse(fs.ByMtime(files)))
 
 	assert.Equal(t, 42, files[0].GetMtime().Minute())
 	assert.Equal(t, 41, files[1].GetMtime().Minute())
